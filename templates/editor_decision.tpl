@@ -1,7 +1,6 @@
 {assign var="pageTitleTranslated" value=$page_title}
 {include file="common/header.tpl"}
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
+<link href="http://localhost:8000/styles/bootstrap.min.css" rel="stylesheet">
 
 <form method="POST" enctype="multipart/form-data" name="emailForm">
 
@@ -39,7 +38,7 @@
 			<label for=""><p style="font-size: 14px;">CC:</p></label>
 		</div>
 		<div class="col-md-6">
-			<div class="form-group"><input style="height: 20px;" type="text" class="form-control" id="cc" name="cc" value="{$cc}"></div>
+			<div class="form-group"><input style="height: 20px;" type="text" class="form-control" id="cc" name="cc" value="{if $cc}{$cc}{else}{$editor_in_chief}{/if}"></div>
 		</div>
 	</div>
 	<div class="row">

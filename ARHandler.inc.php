@@ -73,6 +73,51 @@ class ARHandler extends Handler {
 		}
 
 	}
+
+	function append_links_to_body($request, $body, $sectionEditorSubmission){
+		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+
+		$new_body = "\n---------------------------------\n\nReview Links\n\nBelow you will find links to view your reviews within the JMS. You will be asked to login.\n\n";
+
+		$index = 1;
+		foreach ($reviewAssignments as $reviewAssignment) {
+			var_dump($reviewAssignment);
+			echo "<br /><br />";
+			$url = $request->getJournal()->getUrl() . 'advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
+			$new_body = $new_body . 'Review #' . $index . ': ' . $url . "\n";
+			$index++;
+		}
+
+		$body = $body . $new_body;
+
+		return $body;
+	}
+
+	function login_required($request){
+		$user = $request->getUser();
+		if ($user === NULL) {
+			redirect($request->getJournal()->getUrl() . '/login/signIn?source=' . $_SERVER['REQUEST_URI']);
+		}
+	}
+
+	function check_and_get_article($request) {
+		$article_id = $request->_requestVars['articleId'];
+		$user = $request->getUser();
+
+		if (!$article_id){
+			raise404();
+		}
+
+		$articleDao =& DAORegistry::getDAO('ArticleDAO');
+		$article =& $articleDao->getArticle($article_id);
+
+		if (!$article || $article->getUserId() != $user->getId()){
+			raise404("You are not the owner of this article.");
+		}
+
+		return $article;
+	}
 	
 	/* sets up the template to be rendered */
 	function display($fname, $page_context=array()) {
@@ -116,6 +161,8 @@ class ARHandler extends Handler {
 	}
 
 	function editor_decision($args, &$request) {
+		$this->login_required($request);
+
 		$userDao =& DAORegistry::getDAO('UserDAO');
 		$articleDao =& DAORegistry::getDAO('ArticleDAO');
 		$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
@@ -162,6 +209,11 @@ class ARHandler extends Handler {
 			));
 			$body = $email->getBody();
 			$subject = $email->getSubject();
+
+			$body = $this->append_links_to_body($request, $body, $sectionEditorSubmission);
+
+			$eic_setting = $this->dao->get_setting($journal, 'editor_in_chief');
+			$editor_in_chief = $userDao->getById($eic_setting->fields['setting_value']);
 		}
 
 		$journal =& $request->getJournal();
@@ -173,6 +225,7 @@ class ARHandler extends Handler {
 			'body' => $body,
 			'subject' => $subject,
 			'first_author' => $authorEmail,
+			'editor_in_chief' => $editor_in_chief->getEmail(),
 			'to' => $to,
 			'cc' => $cc,
 			'bc' => $bc,
@@ -219,6 +272,72 @@ class ARHandler extends Handler {
 		);
 
 		$this->display('settings.tpl', $context);
+	}
+
+	function view_review($args, &$request) {
+		$this->login_required($request);
+		$article = $this->check_and_get_article($request);
+		$journal = $request->getJournal();
+
+		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');
+		$sectionEditorSubmission =& $sectionEditorSubmissionDao->getSectionEditorSubmission($article->getId());
+
+		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+
+		if ($_GET['reviewId']) {
+			$review_id = $_GET['reviewId'];
+			$view_reivew =& $reviewAssignmentDao->getReviewAssignmentById($review_id);
+
+			$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
+			$article_comments =& $articleCommentDao->getArticleComments($sectionEditorSubmission->getId(), COMMENT_TYPE_PEER_REVIEW, $view_reivew->getId());
+
+			$body = '';
+
+			if ($view_reivew->getReviewFormId()) {
+				$reviewFormId = $view_reivew->getReviewFormId();
+				$reviewId = $view_reivew->getId();
+				$reviewFormResponseDao =& DAORegistry::getDAO('ReviewFormResponseDAO');
+				$reviewFormElementDao =& DAORegistry::getDAO('ReviewFormElementDAO');
+				$reviewFormElements =& $reviewFormElementDao->getReviewFormElements($reviewFormId);
+
+				foreach ($reviewFormElements as $reviewFormElement) {
+					$body .= String::html2text($reviewFormElement->getLocalizedQuestion()) . ": \n";
+					$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
+
+					if ($reviewFormResponse) {
+						$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
+						if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
+							if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
+								foreach ($reviewFormResponse->getValue() as $value) {
+									$body .= "\t" . String::html2text($possibleResponses[$value-1]['content']) . "\n";
+								}
+							} else {
+								$body .= "\t" . String::html2text($possibleResponses[$reviewFormResponse->getValue()-1]['content']) . "\n";
+							}
+							$body .= "\n";
+						} else {
+							$body .= "\t" . $reviewFormResponse->getValue() . "\n\n";
+						}
+					}
+				}
+				$body .= "------------------------------------------------------\n\n";
+			}
+		}
+
+		$context = array(
+			'user' => $request->getUser(),
+			'journal' => $journal,
+			'page_title' => "Reviews for " . $article->getLocalizedTitle(),
+			'review_assignments' => $reviewAssignments,
+			'article' => $article,
+			'view_reivew' => $view_reivew,
+			'article_comments' => $article_comments,
+			'body' => $body,
+		);
+
+		$this->display('view_review.tpl', $context);
+
 	}
 
 }
