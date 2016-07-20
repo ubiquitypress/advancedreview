@@ -52,31 +52,39 @@ class ARPlugin extends GenericPlugin {
 		return parent::getTemplatePath() . 'templates/';
 	}
 
+	function generate_email($text, $user, $review) {
+
+	}
+
 	function email_thanks_reviewer($hookName, $args) {
-		var_dump($args);
-		exit();
+
+		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+		$userdao =& DAORegistry::getDAO('UserDAO');
+		$journaldao =& DAORegistry::getDAO('JournalDAO');
+		$articleDao =& DAORegistry::getDAO('ArticleDAO');
+		$arDao =& new ARDAO();
+
+		$user =& $userdao->getById($args[0]->_data['reviewerId']);
+		$assignment =& $reviewAssignmentDao->getReviewAssignmentById($args[0]->_data['reviewId']);
+		$journal = $journaldao->getJournal($args[0]->_data['journalId']);
+		$article =& $articleDao->getArticle($assignment->getSubmissionId());
+
+		$ack_text = $arDao->get_setting($journal, 'peer_review_ack')->fields['setting_value'];
+
 		import('lib.pkp.classes.mail.Mail');
-		import('classes.article.log.ArticleLog');
+
+		$reviewerName = $assignment->getReviewerFullName();
+		$articleTitle = $article->getLocalizedTitle();
+
+		$ack_text = str_replace("{reviewerName}", $reviewerName, $ack_text);
+		$ack_text = str_replace("{articleTitle}", $articleTitle, $ack_text);
 
 		$email = new Mail();
-		$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
-		$email->setReplyTo($request->getUser()->getEmail());
-		$email->setSubject($subject);
-		$email->setBody($text);
+		$email->setSubject('Review Acknowledgement');
+		$email->setBody($ack_text);
 		$email->addRecipient($user->getEmail());
 		$email->send();
-
-		$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
-		$entry = $articleEmailLogDao->newDataObject();
-
-		$entry->setEventType('ARTICLE_DECISION');
-		$entry->setSubject($subject);
-		$entry->setBody($text);
-		$entry->setFrom($request->getUser()->getEmail());
-		$entry->setRecipients($email->getRecipients);
-
-		// Add log entry		
-		$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+		
 	}
 
 }
