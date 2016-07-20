@@ -50,5 +50,20 @@ EOF;
 EOF;
 		return $this->retrieve($sql, array($journal->getId()));
 	}
+
+	function user_review_check($user_id, $article_id, $review_round) {
+		$sql = <<< EOF
+		SELECT * FROM review_assignments
+		WHERE reviewer_id = ? and submission_id = ? and round = ?
+EOF;
+
+		$check = $this->retrieve($sql, array($user_id, $article_id, $review_round));
+
+		if($check->_numOfRows > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 

@@ -82,9 +82,7 @@ class ARHandler extends Handler {
 
 		$index = 1;
 		foreach ($reviewAssignments as $reviewAssignment) {
-			var_dump($reviewAssignment);
-			echo "<br /><br />";
-			$url = $request->getJournal()->getUrl() . 'advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
+			$url = $request->getJournal()->getUrl() . '/advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
 			$new_body = $new_body . 'Review #' . $index . ': ' . $url . "\n";
 			$index++;
 		}
@@ -112,11 +110,129 @@ class ARHandler extends Handler {
 		$articleDao =& DAORegistry::getDAO('ArticleDAO');
 		$article =& $articleDao->getArticle($article_id);
 
-		if (!$article || $article->getUserId() != $user->getId()){
-			raise404("You are not the owner of this article.");
+		$user_review_check = $this->dao->user_review_check($user->getId(), $article_id, $article->getCurrentRound());
+
+		$test = true;
+
+		if (!$article && $test == true) {
+			echo 'no article';
+			$test = false;
+		}
+
+		if ($article->getUserId() != $user->getId() && $test == true) {
+			$test = false;
+		}
+
+		if (!$user_review_check && $test == true) {
+			$test = false;
+		} elseif ($user_review_check && $test == false) {
+			$test = true;
+		}
+
+		if ($test == false) {
+			raise404("You are not the owner or a reviewer of this article.");
 		}
 
 		return $article;
+	}
+
+	function check_emails($to, $cc, $bcc) {
+		$email_list = $to . ',' . $cc . ',' . $bcc;
+		$emails = explode(',', $email_list);
+		var_dump($emails);
+
+		$errors = array();
+
+		foreach ($emails as $email) {
+			if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+				array_push($errors, $email);
+			}
+		}
+
+		return $errors;
+	}
+
+	function email_user_details($email, $request, $article, $subject, $text, $to, $cc, $bc) {
+
+		$to = explode(',', $to);
+		foreach($to as $recipient) {
+			if ($recipient) {
+				$email->addRecipient($recipient);
+			}
+		}
+		$cc = explode(',', $cc);
+		foreach($cc as $recipient) {
+			if ($recipient) {
+				$email->addCc($recipient);
+			}
+		}
+		$vc = explode(',', $vc);
+		foreach($bc as $recipient) {
+			if ($recipient) {
+				$email->addBcc($recipient);
+			}
+		}
+		
+		$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
+		$email->setBody($text);
+		$email->setSubject($subject);
+		$email->setReplyTo($request->getUser()->getEmail());
+		$email->send();
+
+		$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
+		$entry = $articleEmailLogDao->newDataObject();
+
+		// Log data
+		$entry->setEventType('ARTICLE_DECISION');
+		$entry->setSubject($subject);
+		$entry->setBody($text);
+		$entry->setFrom($request->getUser()->getEmail());
+		$entry->setRecipients($email->getRecipients);
+
+		// Add log entry
+		import('classes.article.log.ArticleLog');
+		$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+
+	}
+
+	function cc_reviewers($request, $article, $subject, $text, $sectionEditorSubmission) {
+
+		import('lib.pkp.classes.mail.Mail');
+		import('classes.article.log.ArticleLog');
+
+		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+
+		$pr_text = $this->dao->get_setting($request->getJournal(), 'peer_review_text')->fields['setting_value'];
+
+		$text = $pr_text . "\n---------------------------------\n" . $text;
+
+		foreach ($reviewAssignments as $assignment) {
+
+			$userdao =& DAORegistry::getDAO('UserDAO');
+			$user =& $userdao->getById($assignment->getReviewerId());
+			
+			$email = new Mail();
+			$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
+			$email->setReplyTo($request->getUser()->getEmail());
+			$email->setSubject($subject);
+			$email->setBody($text);
+			$email->addRecipient($user->getEmail());
+			$email->send();
+
+			$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
+			$entry = $articleEmailLogDao->newDataObject();
+
+			$entry->setEventType('ARTICLE_DECISION');
+			$entry->setSubject($subject);
+			$entry->setBody($text);
+			$entry->setFrom($request->getUser()->getEmail());
+			$entry->setRecipients($email->getRecipients);
+
+			// Add log entry		
+			$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+		}
+		
 	}
 	
 	/* sets up the template to be rendered */
@@ -193,28 +309,41 @@ class ARHandler extends Handler {
 			isset($decisionTemplateMap[$decisionConst])?$decisionTemplateMap[$decisionConst]:null
 		);
 
+		$authorUser =& $userDao->getById($article->getUserId());
+		$authorEmail = $authorUser->getEmail();
+
+		$email->assignParams(array(
+			'editorialContactSignature' => $user->getContactSignature(),
+			'authorName' => $authorUser->getFullName(),
+			'journalTitle' => $journal->getLocalizedTitle()
+		));
+
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			$body = $_POST['body'];
 			$subject = $_POST['subject'];
 			$to = $_POST['to'];
 			$cc = $_POST['cc'];
 			$bc = $_POST['bc'];
+
+			$email_errors = $this->check_emails($to, $cc, $bc);
+
+			if (!$email_errors && array_key_exists('send_notification', $_POST)) {
+				$this->email_user_details($email, $request, $article, $subject, $body, $to, $cc, $bc);
+				
+				if ($_POST['reviewer']) {
+					$this->cc_reviewers($request, $article, $subject, $body, $sectionEditorSubmission);
+				}
+
+				redirect($journal->getUrl() . '/editor/submissionEditing/' . $article_id);
+			}
 		} else {
-			$authorUser =& $userDao->getById($article->getUserId());
-			$authorEmail = $authorUser->getEmail();
-			$email->assignParams(array(
-				'editorialContactSignature' => $user->getContactSignature(),
-				'authorName' => $authorUser->getFullName(),
-				'journalTitle' => $journal->getLocalizedTitle()
-			));
 			$body = $email->getBody();
 			$subject = $email->getSubject();
-
-			$body = $this->append_links_to_body($request, $body, $sectionEditorSubmission);
-
-			$eic_setting = $this->dao->get_setting($journal, 'editor_in_chief');
-			$editor_in_chief = $userDao->getById($eic_setting->fields['setting_value']);
+			$body = $this->append_links_to_body($request, $body, $sectionEditorSubmission);			
 		}
+
+		$eic_setting = $this->dao->get_setting($journal, 'editor_in_chief');
+		$editor_in_chief = $userDao->getById($eic_setting->fields['setting_value']);
 
 		$journal =& $request->getJournal();
 
@@ -229,6 +358,7 @@ class ARHandler extends Handler {
 			'to' => $to,
 			'cc' => $cc,
 			'bc' => $bc,
+			'email_errors' => $email_errors,
 		);
 
 		$this->display('editor_decision.tpl', $context);

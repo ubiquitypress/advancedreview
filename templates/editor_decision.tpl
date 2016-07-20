@@ -6,14 +6,14 @@
 
 <div class="row">
 	<div class="col-md-3">
-		<button style="margin-top: 5px;" type="submit" class="btn btn-success btn-lg"><i class="fa fa-envelope-o">&nbsp;</i>Send notifications</button>
+		<button style="margin-top: 5px;" type="submit" name="send_notification" value="yes" class="btn btn-success btn-lg"><i class="fa fa-envelope-o">&nbsp;</i>Send notifications</button>
 	</div>
 	<div class="col-md-3">
 		<div class="checkbox">
-		 	<label><input type="checkbox" checked="checked" value="author">Send author email</label>
+		 	<label><input type="checkbox" checked="checked" name="author">Send author email</label>
 		</div>
 		<div class="checkbox">
-		 	<label><input type="checkbox" checked="checked" value="reviewer">Send BCC email to reviewers</label>
+		 	<label><input type="checkbox" checked="checked" name="reviewer">Send BCC email to reviewers</label>
 		</div>
 	</div>
 	<div class="col-md-6">
