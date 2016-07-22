@@ -10,7 +10,7 @@
 	</div>
 	<div class="col-md-3">
 		<div class="checkbox">
-		 	<label><input type="checkbox" checked="checked" name="author">Send author email</label>
+		 	<label><input type="checkbox" id="author" checked="checked" name="author">Send author email</label>
 		</div>
 		<div class="checkbox">
 		 	<label><input type="checkbox" checked="checked" name="reviewer">Send BCC email to reviewers</label>
@@ -68,6 +68,7 @@
 			<div class="form-group"><textarea class="form-control" name="body" rows="20">{$body|escape}</textarea></div>
 		</div>
 	</div>
+	<input type="hidden" id="hiddenAuthor" name="hidennAuthor" value="" />
 	<div class="row">
 		<div class="col-md-2">
 			<label for=""><p style="font-size: 14px;">Attachments:</p></label>
@@ -93,4 +94,19 @@
 		</div>
 	</div>
 </form>
+
+<script type="text/javascript">
+	{literal}
+	$("#author").change(function() {
+	    if(this.checked) {
+	        $('#to').val($('#hiddenAuthor').val());
+	        $('#hiddenAuthor').val('');
+	    } else {
+	    	$('#hiddenAuthor').val($('#to').val());
+	    	$('#to').val('');
+	    }
+	});
+	{/literal}
+</script>
+
 {include file="common/footer.tpl"}
