@@ -1,8 +1,6 @@
 {assign var="pageTitleTranslated" value=$page_title}
 {include file="common/header.tpl"}
 
-<link href="http://localhost:8000/styles/bootstrap.min.css" rel="stylesheet">
-
 <table class="table">
 	<tr>
 		<th>Setting Name</th>
