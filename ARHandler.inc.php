@@ -120,8 +120,6 @@ class ARHandler extends Handler {
 			array_push($approved_ids, $review['reviewer_id']);
 		}
 
-		var_dump($approved_ids);
-
 		if (!in_array($user->getId(), $approved_ids)) {
 			raise404("You are not the owner or one of this article's reviewers.");
 		}
@@ -169,7 +167,6 @@ class ARHandler extends Handler {
 	function check_emails($to, $cc, $bcc) {
 		$email_list = $to . ',' . $cc . ',' . $bcc;
 		$emails = explode(',', $email_list);
-		var_dump($emails);
 
 		$errors = array();
 
