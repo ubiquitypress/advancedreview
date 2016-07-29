@@ -80,10 +80,13 @@ class ARPlugin extends GenericPlugin {
 		$ack_text = str_replace("{articleTitle}", $articleTitle, $ack_text);
 
 		$email = new Mail();
+		$email->setFrom(strtolower($journal->getPath()) . '@ubiquity.press', $journal->getLocalizedTitle());
 		$email->setSubject('Review Acknowledgement');
 		$email->setBody($ack_text);
 		$email->addRecipient($user->getEmail());
 		$email->send();
+
+		$assignment->setDateAcknowledged(Core::getCurrentDate());
 		
 	}
 

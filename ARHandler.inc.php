@@ -78,7 +78,9 @@ class ARHandler extends Handler {
 		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
 
-		$new_body = "\n---------------------------------\n\nReview Links\n\nBelow you will find links to view your reviews within the JMS. You will be asked to login.\n\n";
+		$link_text = $this->dao->get_setting($request->getJournal(), 'link_text');
+
+		$new_body = "\n---------------------------------\n\nReview Links\n\n" . $link_text->fields['setting_value'] .  "\n\n";
 
 		$index = 1;
 		foreach ($reviewAssignments as $reviewAssignment) {
@@ -97,6 +99,33 @@ class ARHandler extends Handler {
 		if ($user === NULL) {
 			redirect($request->getJournal()->getUrl() . '/login/signIn?source=' . $_SERVER['REQUEST_URI']);
 		}
+	}
+
+	function check_and_get_article_advanced($request) {
+		$article_id = $request->_requestVars['articleId'];
+		$user = $request->getUser();
+		$approved_ids = array();
+
+		if (!$article_id){
+			raise404();
+		}
+
+		$articleDao =& DAORegistry::getDAO('ArticleDAO');
+		$article =& $articleDao->getArticle($article_id);
+		array_push($approved_ids, $article->getUserId());
+
+		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($article->getId(), $article->getCurrentRound());
+
+		foreach ($reviewAssignments as $review) {
+			array_push($approved_ids, $review->getReviewerId());
+		}
+
+		if (!in_array($user->getId(), $approved_ids)) {
+			raise404("You are not the owner or one of this article's reviewers.");
+		}
+
+		return $article;
 	}
 
 	function check_and_get_article($request) {
@@ -213,7 +242,7 @@ class ARHandler extends Handler {
 			$user =& $userdao->getById($assignment->getReviewerId());
 			
 			$email = new Mail();
-			$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
+			$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press', $request->getJournal()->getLocalizedTitle());
 			$email->setReplyTo($request->getUser()->getEmail());
 			$email->setSubject($subject);
 			$email->setBody($text);
@@ -246,7 +275,7 @@ class ARHandler extends Handler {
 		
 		// default page values
 		$context = array(
-			"page_title" => "Advanced Review"
+			"page_title" => "Fast Review"
 		);
 		foreach($page_context as $key => $val) {
 			$context[$key] = $val;
@@ -385,6 +414,8 @@ class ARHandler extends Handler {
 			$users = false;
 		}
 
+
+
 		if ($edit && $_SERVER['REQUEST_METHOD'] == 'POST') {
 			$setting_value = $_POST['setting'];
 			$update = $this->dao->update_ar_setting($journal, $setting_to_edit->fields['setting_name'], $setting_value);
@@ -395,10 +426,11 @@ class ARHandler extends Handler {
 			'user' => $user,
 			'journal' => $journal,
 			'settings' => $settings,
-			'page_title' => 'Advanded Review Feature Settings',
+			'page_title' => 'Fast Review Feature Settings',
 			'setting_to_edit' => $setting_to_edit,
 			'editor_in_chief' => $editor_in_chief,
-			'users', $users,
+			'users' => $users,
+			'eic_id' => $setting_to_edit->fields['setting_value'],
 		);
 
 		$this->display('settings.tpl', $context);
@@ -406,7 +438,7 @@ class ARHandler extends Handler {
 
 	function view_review($args, &$request) {
 		$this->login_required($request);
-		$article = $this->check_and_get_article($request);
+		$article = $this->check_and_get_article_advanced($request);
 		$journal = $request->getJournal();
 
 		$sectionEditorSubmissionDao =& DAORegistry::getDAO('SectionEditorSubmissionDAO');

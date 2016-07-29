@@ -7,14 +7,14 @@
 
 <div class="row">
 	<div class="col-md-3">
-		<button style="margin-top: 5px;" type="submit" name="send_notification" value="yes" class="btn btn-success btn-lg"><i class="fa fa-envelope-o">&nbsp;</i>Send notifications</button>
+		<button style="margin-top: 5px;" type="submit" name="send_notification" value="yes" class="btn btn-success btn"><i class="fa fa-envelope-o">&nbsp;</i>Send notifications</button>
 	</div>
 	<div class="col-md-3">
 		<div class="checkbox">
 		 	<label><input type="checkbox" id="author" checked="checked" name="author">Send author email</label>
 		</div>
 		<div class="checkbox">
-		 	<label><input type="checkbox" checked="checked" name="reviewer">Send BCC email to reviewers</label>
+		 	<label><input type="checkbox" checked="checked" name="reviewer">Send copy of email to reviewers</label>
 		</div>
 	</div>
 	<div class="col-md-6">
@@ -90,8 +90,8 @@
 			<label for=""><p style="font-size: 14px;">Attachments:</p></label>
 		</div>
 		
-		<div class="col-md-6">
-			<div class="form-group"><input type="file" name="newAttachment" class="uploadField"> <input name="addAttachment" type="submit" class="btn btn-primary btn-sm" value="Upload"></div>
+		<div class="col-md-3">
+			<div class="form-group"><br /><input type="file" name="newAttachment" class="uploadField"> </div>
 
 			{assign var=attachmentNum value=1}
 			{foreach from=$email->persistAttachments item=temporaryFile}
@@ -107,6 +107,9 @@
 			{foreach from=$email->persistAttachments item=temporaryFile}
 				<input type="hidden" name="persistAttachments[]" value="{$temporaryFile->getId()}" />
 			{/foreach}
+		</div>
+		<div class="col-md-2">
+			<input style="margin-top: 10px;" name="addAttachment" type="submit" class="btn btn-primary btn-xs" value="Upload">
 		</div>
 	</div>
 	</div>

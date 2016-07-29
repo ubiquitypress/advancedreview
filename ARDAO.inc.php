@@ -44,9 +44,11 @@ EOF;
 
 	function get_users($journal){
 		$sql = <<< EOF
-			SELECT * FROM users AS u
+			SELECT u.* FROM users AS u
 			JOIN roles as r ON u.user_id = r.user_id
-			WHERE r.journal_id = ?
+			WHERE r.journal_id = ? and r.role_id = 256
+			GROUP BY u.user_id
+			ORDER BY u.last_name
 EOF;
 		return $this->retrieve($sql, array($journal->getId()));
 	}
