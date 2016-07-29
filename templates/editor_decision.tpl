@@ -90,7 +90,7 @@
 			<label for=""><p style="font-size: 14px;">Attachments:</p></label>
 		</div>
 		
-		<div class="col-md-3">
+		<div class="col-md-4">
 			<div class="form-group"><br /><input type="file" name="newAttachment" class="uploadField"> </div>
 
 			{assign var=attachmentNum value=1}
