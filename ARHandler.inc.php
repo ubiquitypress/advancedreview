@@ -114,12 +114,13 @@ class ARHandler extends Handler {
 		$article =& $articleDao->getArticle($article_id);
 		array_push($approved_ids, $article->getUserId());
 
-		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
-		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($article->getId(), $article->getCurrentRound());
+		$user_review_check = $this->dao->user_review_check($user->getId(), $article_id, $article->getCurrentRound());
 
-		foreach ($reviewAssignments as $review) {
-			array_push($approved_ids, $review->getReviewerId());
+		foreach ($user_review_check as $review) {
+			array_push($approved_ids, $review['reviewer_id']);
 		}
+
+		var_dump($approved_ids);
 
 		if (!in_array($user->getId(), $approved_ids)) {
 			raise404("You are not the owner or one of this article's reviewers.");
