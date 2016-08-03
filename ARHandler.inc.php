@@ -238,9 +238,6 @@ class ARHandler extends Handler {
 
 		$text = $pr_text . "\n---------------------------------\n" . $text;
 
-		echo $text;
-		exit();
-
 		foreach ($reviewAssignments as $assignment) {
 
 			$userdao =& DAORegistry::getDAO('UserDAO');
