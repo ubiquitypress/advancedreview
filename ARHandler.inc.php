@@ -232,7 +232,14 @@ class ARHandler extends Handler {
 
 		$pr_text = $this->dao->get_setting($request->getJournal(), 'peer_review_text')->fields['setting_value'];
 
+		$arr = explode("\n", $text);
+		array_shift($arr);
+		$text = implode("\n", $arr);
+
 		$text = $pr_text . "\n---------------------------------\n" . $text;
+
+		echo $text;
+		exit();
 
 		foreach ($reviewAssignments as $assignment) {
 
@@ -361,7 +368,7 @@ class ARHandler extends Handler {
 					$this->cc_reviewers($request, $article, $subject, $body, $sectionEditorSubmission);
 				}
 
-				redirect($journal->getUrl() . '/editor/submissionEditing/' . $article_id);
+				redirect($journal->getUrl() . '/editor/submissionReview/' . $article_id);
 			}
 		} else {
 			$body = $email->getBody();
