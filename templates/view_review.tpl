@@ -4,7 +4,7 @@
 <h3>Completed Review Assignments:</h3>
 <ul>
 	{foreach from=$review_assignments item=assignment}
-	{if $assignment->getDateCompleted()}<li><a href="{$journal->getUrl()}/advancedreview/view_review?articleId={$article->getId()}&amp;reviewId={$assignment->getId()}">Review Assignment #{$assignment->getId()}</a></li>{/if}
+	{if $assignment->getDateCompleted() and $assignment->getRecommendation()}<li><a href="{$journal->getUrl()}/advancedreview/view_review?articleId={$article->getId()}&amp;reviewId={$assignment->getId()}">Review Assignment #{$assignment->getId()}</a></li>{/if}
 	{/foreach}
 </ul>
 
