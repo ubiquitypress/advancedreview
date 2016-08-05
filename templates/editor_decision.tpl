@@ -25,7 +25,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<h4>Decision notification email for {$article->getLocalizedTitle()}</h4><br />
-			<p class="small">To, CC and BCC lists should be comma seperated eg. test@example.com,testing@example.com</p>
+			<p class="small">To, CC and BCC lists should be comma separated eg. test@example.com,testing@example.com</p>
 		</div>
 	</div>
 	<div class="row">
