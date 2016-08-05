@@ -84,9 +84,11 @@ class ARHandler extends Handler {
 
 		$index = 1;
 		foreach ($reviewAssignments as $reviewAssignment) {
-			$url = $request->getJournal()->getUrl() . '/advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
-			$new_body = $new_body . 'Review #' . $index . ': ' . $url . "\n";
-			$index++;
+			if ($reviewAssignment->getRecommendation()) {
+				$url = $request->getJournal()->getUrl() . '/advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
+				$new_body = $new_body . 'Review #' . $index . ': ' . $url . "\n";
+				$index++;
+			}
 		}
 
 		$body = $body . $new_body;
