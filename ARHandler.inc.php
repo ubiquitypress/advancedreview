@@ -75,6 +75,10 @@ class ARHandler extends Handler {
 	}
 
 	function append_links_to_body($request, $body, $sectionEditorSubmission){
+
+		$nums = array(1=>'A', 2=>'B', 3=>'C', 4=>'D', 5=>'E', 6=>'F', 7=>'G', 8=>'H', 9=>'I', 10=>'J',
+			11=>'K', 12=>'L', 13=>'M', 14=>'N');
+
 		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
 
@@ -86,9 +90,9 @@ class ARHandler extends Handler {
 		foreach ($reviewAssignments as $reviewAssignment) {
 			if ($reviewAssignment->getRecommendation()) {
 				$url = $request->getJournal()->getUrl() . '/advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
-				$new_body = $new_body . 'Review #' . $index . ': ' . $url . "\n";
-				$index++;
+				$new_body = $new_body . 'Review ' . $nums[$index] . ': ' . $url . "\n";
 			}
+			$index++;
 		}
 
 		$body = $body . $new_body;
