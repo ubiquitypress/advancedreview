@@ -76,11 +76,12 @@ class ARHandler extends Handler {
 
 	function append_links_to_body($request, $body, $sectionEditorSubmission){
 
-		$nums = array(1=>'A', 2=>'B', 3=>'C', 4=>'D', 5=>'E', 6=>'F', 7=>'G', 8=>'H', 9=>'I', 10=>'J',
-			11=>'K', 12=>'L', 13=>'M', 14=>'N');
-
 		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+		$reviewIndexes =& $reviewAssignmentDao->getReviewIndexesForRound($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+
+		$nums = array(0=>'A', 1=>'B', 2=>'C', 3=>'D', 4=>'E', 5=>'F', 6=>'G', 7=>'H', 8=>'I', 9=>'J',
+			10=>'K', 11=>'L', 12=>'M', 13=>'N');
 
 		$link_text = $this->dao->get_setting($request->getJournal(), 'link_text');
 
@@ -90,7 +91,7 @@ class ARHandler extends Handler {
 		foreach ($reviewAssignments as $reviewAssignment) {
 			if ($reviewAssignment->getRecommendation()) {
 				$url = $request->getJournal()->getUrl() . '/advancedreview/view_review?articleId=' . $sectionEditorSubmission->getId() . '&reviewId=' . $reviewAssignment->getId();
-				$new_body = $new_body . 'Review ' . $nums[$index] . ': ' . $url . "\n";
+				$new_body = $new_body . 'Review ' . $nums[$reviewIndexes[$reviewAssignment->getId()]] . ': ' . $url . "\n";
 			}
 			$index++;
 		}
@@ -454,6 +455,9 @@ class ARHandler extends Handler {
 
 		$reviewAssignmentDao =& DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignments =& $reviewAssignmentDao->getBySubmissionId($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+		$reviewIndexes =& $reviewAssignmentDao->getReviewIndexesForRound($sectionEditorSubmission->getId(), $sectionEditorSubmission->getCurrentRound());
+		$nums = array(0=>'A', 1=>'B', 2=>'C', 3=>'D', 4=>'E', 5=>'F', 6=>'G', 7=>'H', 8=>'I', 9=>'J',
+			10=>'K', 11=>'L', 12=>'M', 13=>'N');
 
 		if ($_GET['reviewId']) {
 			$review_id = $_GET['reviewId'];
@@ -504,6 +508,8 @@ class ARHandler extends Handler {
 			'view_reivew' => $view_reivew,
 			'article_comments' => $article_comments,
 			'body' => $body,
+			'reviewIndexes' => $reviewIndexes,
+			'nums' => $nums,
 		);
 
 		$this->display('view_review.tpl', $context);
