@@ -516,6 +516,21 @@ class ARHandler extends Handler {
 
 	}
 
+	function download_file($args, $request) {
+		$reviewId = $request->_requestVars['reviewId'];
+		$articleId = $request->_requestVars['articleId'];
+		$fileId = $request->_requestVars['fileId'];
+		$revision = $request->_requestVars['revision'];
+		if (!$revision) $revision = null;
+
+		$article = $this->check_and_get_article_advanced($request);
+
+		$this->validate($request, $reviewId);
+
+		import('classes.submission.common.Action');
+		return Action::downloadFile($article->getId(), $fileId, $revision);
+	}
+
 }
 
 ?>

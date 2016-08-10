@@ -23,6 +23,26 @@
 	{else}
 	<p>Nothing to display</p>
 	{/if}
+
+	<h4>Files</h4>
+	{foreach from=$view_reivew->getReviewerFileRevisions() item=reviewerFile key=key}
+		{if $reviewerFile->getViewable()}
+		<tr valign="top">
+			<td valign="middle">
+				<a href="{$journal->getUrl()}/advancedreview/download_file?articleId={$article->getId()}&amp;reviewId={$assignment->getId()}&amp;fileId={$reviewerFile->getFileId()}&amp;revision={$reviewerFile->getRevision()}">{$reviewerFile->getFileName()|escape}</a>
+				
+			</td>
+		</tr>
+		{else}
+		<tr valign="top">
+			<td>{translate key="common.none"}</td>
+		</tr>
+		{/if}
+		{foreachelse}
+		<tr valign="top">
+			<td>{translate key="common.none"}</td>
+		</tr>
+	{/foreach}
 {/if}
 
 {include file="common/footer.tpl"}
