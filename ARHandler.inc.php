@@ -247,28 +247,32 @@ class ARHandler extends Handler {
 
 		foreach ($reviewAssignments as $assignment) {
 
-			$userdao =& DAORegistry::getDAO('UserDAO');
-			$user =& $userdao->getById($assignment->getReviewerId());
-			
-			$email = new Mail();
-			$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press', $request->getJournal()->getLocalizedTitle());
-			$email->setReplyTo($request->getUser()->getEmail());
-			$email->setSubject($subject);
-			$email->setBody($text);
-			$email->addRecipient($user->getEmail());
-			$email->send();
+			if ($assignment->getRecommendation()) {
 
-			$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
-			$entry = $articleEmailLogDao->newDataObject();
+				$userdao =& DAORegistry::getDAO('UserDAO');
+				$user =& $userdao->getById($assignment->getReviewerId());
+				
+				$email = new Mail();
+				$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press', $request->getJournal()->getLocalizedTitle());
+				$email->setReplyTo($request->getUser()->getEmail());
+				$email->setSubject($subject);
+				$email->setBody($text);
+				$email->addRecipient($user->getEmail());
+				$email->send();
 
-			$entry->setEventType('ARTICLE_DECISION');
-			$entry->setSubject($subject);
-			$entry->setBody($text);
-			$entry->setFrom($request->getUser()->getEmail());
-			$entry->setRecipients($email->getRecipients);
+				$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
+				$entry = $articleEmailLogDao->newDataObject();
 
-			// Add log entry		
-			$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+				$entry->setEventType('ARTICLE_DECISION');
+				$entry->setSubject($subject);
+				$entry->setBody($text);
+				$entry->setFrom($request->getUser()->getEmail());
+				$entry->setRecipients($email->getRecipients);
+
+				// Add log entry		
+				$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+
+			}
 		}
 		
 	}
