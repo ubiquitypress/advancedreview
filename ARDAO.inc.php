@@ -58,8 +58,6 @@ EOF;
 		SELECT * FROM review_assignments
 		WHERE submission_id = ? and round = ?
 EOF;
-
 		return $this->retrieve($sql, array($article_id, $review_round));
 	}
 }
-
