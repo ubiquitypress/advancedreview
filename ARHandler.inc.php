@@ -274,7 +274,7 @@ class ARHandler extends Handler {
 				$entry->setRecipients($email->getRecipients);
 
 				// Add log entry		
-				$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+				$logEntryId = ArticleLog::logEmail($article->getId(), $entry, $request);
 
 			}
 		}

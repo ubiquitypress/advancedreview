@@ -45,10 +45,16 @@ class ARPlugin extends GenericPlugin {
             $decision = $request->getUserVar('decision');
 
             switch ($decision) {
+            case SUBMISSION_EDITOR_DECISION_DECLINE:
+                SectionEditorAction::recordDecision($submission, $decision, $request);
+                $articleDao =& DAORegistry::getDAO('ArticleDAO');
+                $articleDao->changeArticleStatus(
+                    $articleId,
+                    STATUS_DECLINED);
+                break;
             case SUBMISSION_EDITOR_DECISION_ACCEPT:
             case SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS:
             case SUBMISSION_EDITOR_DECISION_RESUBMIT:
-            case SUBMISSION_EDITOR_DECISION_DECLINE:
                 SectionEditorAction::recordDecision($submission, $decision, $request);
                 break;
             }
