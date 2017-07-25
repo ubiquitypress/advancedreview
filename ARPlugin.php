@@ -72,8 +72,8 @@ class ARPlugin extends GenericPlugin {
             $request = $this->getRequest();
             $this->recordDecision($request);
             $router = $request->getRouter();
-            $journal = $request->getJournal();
-            $request->redirect($router->getContext($request), 'advancedreview', 'editor_decision', null, array('articleId' => $journal->getId()));
+            $articleId = $request->getUserVar('articleId');
+            $request->redirect($router->getContext($request), 'advancedreview', 'editor_decision', null, array('articleId' => $articleId));
         }
         
         if ($page == 'advancedreview') {
