@@ -33,6 +33,10 @@ function login_required($user) {
 	}
 }
 
+function get($val, $default) {
+         return isset($val) ? $val : $default;
+}
+
 class ARHandler extends Handler {
 
 	public $dao = null;
@@ -200,7 +204,7 @@ class ARHandler extends Handler {
 				$email->addCc($recipient);
 			}
 		}
-		$vc = explode(',', $vc);
+                $bc = explode(',', $bc);
 		foreach($bc as $recipient) {
 			if ($recipient) {
 				$email->addBcc($recipient);
@@ -270,7 +274,7 @@ class ARHandler extends Handler {
 				$entry->setRecipients($email->getRecipients);
 
 				// Add log entry		
-				$logEntryId = ArticleLog::logEmail($articleId, $entry, $request);
+				$logEntryId = ArticleLog::logEmail($article->getId(), $entry, $request);
 
 			}
 		}
@@ -361,11 +365,11 @@ class ARHandler extends Handler {
 		));
 
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-			$body = $_POST['body'];
-			$subject = $_POST['subject'];
-			$to = $_POST['to'];
-			$cc = $_POST['cc'];
-			$bc = $_POST['bc'];
+			$body = get($_POST['body'], '');
+			$subject = get($_POST['subject'], '');
+			$to = get($_POST['to'], '');
+			$cc = get($_POST['cc'], '');
+			$bc = get($_POST['bc'], '');
 
 			$email_errors = $this->check_emails($to, $cc, $bc);
 
@@ -381,7 +385,11 @@ class ARHandler extends Handler {
 		} else {
 			$body = $email->getBody();
 			$subject = $email->getSubject();
-			$body = $this->append_links_to_body($request, $body, $sectionEditorSubmission);			
+			$body = $this->append_links_to_body($request, $body, $sectionEditorSubmission);
+            $to = '';
+			$cc = '';
+			$bc = '';
+            $email_errors = array();
 		}
 
 		$eic_setting = $this->dao->get_setting($journal, 'editor_in_chief');
