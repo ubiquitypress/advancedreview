@@ -379,8 +379,8 @@ class ARHandler extends Handler {
 				if ($_POST['reviewer']) {
 					$this->cc_reviewers($request, $article, $subject, $body, $sectionEditorSubmission);
 				}
-
-				redirect($journal->getUrl() . '/editor/submissionReview/' . $article_id);
+                $page = $_GET['page'];
+				redirect($journal->getUrl() . '/'. $page . '/submissionReview/' . $article_id);
 			}
 		} else {
 			$body = $email->getBody();
