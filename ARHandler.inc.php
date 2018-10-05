@@ -211,10 +211,10 @@ class ARHandler extends Handler {
 			}
 		}
 		
-		$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
+		//$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press');
 		$email->setBody($text);
 		$email->setSubject($subject);
-		$email->setReplyTo($request->getUser()->getEmail());
+		$email->setFrom($request->getUser()->getEmail());
 		$email->send();
 
 		$articleEmailLogDao =& DAORegistry::getDAO('ArticleEmailLogDAO');
@@ -257,8 +257,8 @@ class ARHandler extends Handler {
 				$user =& $userdao->getById($assignment->getReviewerId());
 				
 				$email = new Mail();
-				$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press', $request->getJournal()->getLocalizedTitle());
-				$email->setReplyTo($request->getUser()->getEmail());
+				//$email->setFrom(strtolower($request->getJournal()->getPath()) . '@ubiquity.press', $request->getJournal()->getLocalizedTitle());
+				$email->setFrom($request->getUser()->getEmail());
 				$email->setSubject($subject);
 				$email->setBody($text);
 				$email->addRecipient($user->getEmail());
